@@ -1,0 +1,146 @@
+package ast
+
+import "mylua-lsp/lsp/common"
+
+/*
+exp ::=  nil | false | true | Numeral | LiteralString | ‘...’ | functiondef |
+	 prefixexp | tableconstructor | exp binop exp | unop exp
+
+prefixexp ::= var | functioncall | ‘(’ exp ‘)’
+
+var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
+
+functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
+*/
+
+// NilExp nil
+type NilExp struct {
+	ExpBase
+}
+
+// A BadExpr node is a placeholder for an expression containing
+// syntax errors for which a correct expression node cannot be
+// created.
+type BadExpr struct {
+	ExpBase
+}
+
+type TrueExp struct {
+	ExpBase
+}
+
+// FalseExp false
+type FalseExp struct {
+	ExpBase
+}
+
+// VarargExp ...
+type VarargExp struct {
+	ExpBase
+}
+
+// IntegerExp 整数
+type IntegerExp struct {
+	ExpBase
+	Val int64
+}
+
+// FloatExp 浮点数
+type FloatExp struct {
+	ExpBase
+	Val float64
+}
+
+// StringExp 字符串
+type StringExp struct {
+	ExpBase
+	Str string
+}
+
+// UnopExp 一元表达式 unop exp
+type UnopExp struct {
+	ExpBase
+	Op  TkKind // operator
+	Exp *ExpBase
+}
+
+// BinopExp 二元表达式 exp1 op exp2
+type BinopExp struct {
+	ExpBase
+	Op   TkKind // operator
+	Exp1 *ExpBase
+	Exp2 *ExpBase
+}
+
+// TableConstructorExp table构造
+// tableconstructor ::= ‘{’ [fieldlist] ‘}’
+//
+// fieldlist ::= field {fieldsep field} [fieldsep]
+//
+// field ::= ‘[’ exp ‘]’ ‘=’ exp | Name ‘=’ exp | exp
+//
+// fieldsep ::= ‘,’ | ‘;’
+type TableConstructorExp struct {
+	ExpBase
+	KeyExps []*ExpBase
+	ValExps []*ExpBase
+}
+
+// functiondef ::= function funcbody
+//
+// funcbody ::= ‘(’ [parlist] ‘)’ block end
+//
+// parlist ::= namelist [‘,’ ‘...’] | ‘...’
+//
+// namelist ::= Name {‘,’ Name}
+type FuncDefExp struct {
+	ExpBase
+	ClassName  string // 例如 function table.func() end // table即ClassName
+	FuncName   string // 例如 function table.func() end // func即FuncName
+	ParList    []string
+	ParLocList []common.Location // 所有参数的位置信息
+	Block      *Block
+	IsVararg   bool // 是否是...可变参数
+	IsColon    bool // 是否为: 这样的函数
+}
+
+/*
+prefixexp ::= Name |
+              ‘(’ exp ‘)’ |
+              prefixexp ‘[’ exp ‘]’ |
+              prefixexp ‘.’ Name |
+              prefixexp ‘:’ Name args |
+              prefixexp args
+*/
+
+// NameExp 引用其他变量
+type NameExp struct {
+	ExpBase
+	Name string
+}
+
+// ParensExp 括号包含表达式或值
+type ParensExp struct {
+	ExpBase
+	Exp *ExpBase
+}
+
+// TableAccessExp 成员变量获取
+type TableAccessExp struct {
+	ExpBase
+	PrefixExp            *ExpBase
+	KeyExp               *ExpBase
+	IsLastExpInPrefixExp bool
+	IsWriteExp           bool
+}
+
+// FuncCallExp 函数调用
+// 当调用这样的函数时 aaa:bb("1", "2")
+// 其中aaa 为 PrefixExp， bb 为NameExp，括号内的为参数
+type FuncCallExp struct {
+	ExpBase
+	PrefixExp            *ExpBase
+	NameExp              *StringExp
+	Args                 []*ExpBase
+	IsLastExpInPrefixExp bool
+}
