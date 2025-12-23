@@ -13,8 +13,7 @@ import (
 // explist ::= exp {',' exp}}
 type Block struct {
 	LuaAstBase
-	Stats   []*Stat
-	RetExps []*ExpBase
+	Stats []Stat
 }
 
 /*
@@ -34,9 +33,6 @@ stat ::=  ‘;’ |
 	 local function Name funcbody |
 	 local namelist [‘=’ explist]
 */
-
-// EmptyStat 空表达式或者错误。不会出现在 Ast 中，会被忽略掉
-type EmptyStat struct{}
 
 // BreakStat break语句
 // break

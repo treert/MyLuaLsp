@@ -5,7 +5,7 @@ import "mylua-lsp/lsp/common"
 // LuaAstBase 语法树基础结构，提供父节点指针
 type LuaAstBase struct {
 	Loc    common.Location
-	Parent *LuaAstBase
+	Parent Stat
 }
 
 type ExpBase struct {
@@ -13,7 +13,42 @@ type ExpBase struct {
 	Type any // 关联的类型信息
 }
 
-type Stat LuaAstBase
+type Stat interface {
+	GetLoc() common.Location
+	SetParent(parent Stat)
+	GetParent() Stat
+	IsExp() bool
+}
+
+type Exp interface {
+	Stat
+	GetParentExp() Exp
+}
+
+func (b *LuaAstBase) GetLoc() common.Location {
+	return b.Loc
+}
+
+func (b *LuaAstBase) SetParent(parent Stat) {
+	b.Parent = parent
+}
+
+func (b *LuaAstBase) GetParent() Stat {
+	return b.Parent
+}
+
+func (b *LuaAstBase) IsExp() bool {
+	return false
+}
+
+func (b *ExpBase) GetParentExp() Exp {
+	var p, _ = b.Parent.(Exp)
+	return p
+}
+
+func (b *ExpBase) IsExp() bool {
+	return true
+}
 
 /*
 lua 语法相关的一些零碎放这儿。

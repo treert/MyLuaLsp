@@ -133,11 +133,6 @@ func (l *Lexer) GetNowToken() Token {
 	return l.nowToken
 }
 
-// GetNowTokenLoc get current Token location
-func (l *Lexer) GetNowTokenLoc() common.Location {
-	return l.nowToken.Loc
-}
-
 func (l *Lexer) getLineEndLoc(line int) common.Location {
 	var str = l.source.GetOneLine(line)
 	var pos = common.Position{Line: line, Column: len(str)}
@@ -312,7 +307,7 @@ func (l *Lexer) nextTokenStruct() {
 
 	illegalStr := l.scanIllegalToken()
 	l.setNowToken(ast.IKIllegal, illegalStr)
-	l.errorPrint(l.GetNowTokenLoc(), "unexpected token:%s", illegalStr)
+	l.errorPrint(l.nowToken.Loc, "unexpected token:%s", illegalStr)
 }
 
 func (l *Lexer) scanIllegalToken() string {
