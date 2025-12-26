@@ -43,13 +43,13 @@ type BreakStat struct {
 // ‘::’ Name ‘::’
 type LabelStat struct {
 	LuaAstBase
-	Name string
+	Name Token
 }
 
 // goto Name
 type GotoStat struct {
 	LuaAstBase
-	Name string
+	Name Token
 }
 
 // do block end

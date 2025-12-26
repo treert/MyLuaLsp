@@ -14,21 +14,14 @@ import (
 3. block_comment
 */
 
-// Token 词法分析出来的每个单词
-type Token struct {
-	valid     bool       // valid or not
-	tokenKind ast.TkKind // token kind
-
-	tokenStr string // token string
-	Loc      common.Location
-}
-
-func (tk Token) IsValid() bool {
-	return tk.valid
-}
+type Token = ast.Token
+type TkKind = ast.TkKind
+type Position = common.Position
+type Location = common.Location
+type ParseError = ast.ParseError
 
 // ErrorHandler 词法分析上报错误
-type ErrorHandler func(oneErr ast.ParseError)
+type ErrorHandler func(oneErr ParseError)
 
 type LuaCommentMap map[int]*ast.CommentBlock
 
@@ -36,9 +29,9 @@ type LuaCommentMap map[int]*ast.CommentBlock
 type Lexer struct {
 	source   *common.LuaSource
 	cur_line string
-	nextPos  common.Position
+	nextPos  Position
 
-	tokenStartPos common.Position
+	tokenStartPos Position
 
 	preToken   Token
 	nowToken   Token
@@ -54,15 +47,15 @@ func NewLexer(source *common.LuaSource, errHandler ErrorHandler) *Lexer {
 	var lex = &Lexer{
 		source:   source,
 		cur_line: source.GetOneLine(0),
-		nextPos:  common.Position{Line: 0, Column: 0},
+		nextPos:  Position{Line: 0, Column: 0},
 		preToken: Token{
-			valid: false,
+			Valid: false,
 		},
 		nowToken: Token{
-			valid: false,
+			Valid: false,
 		},
 		aheadToken: Token{
-			valid: false,
+			Valid: false,
 		},
 		commentMap: LuaCommentMap{},
 		errHandler: errHandler,
@@ -133,16 +126,16 @@ func (l *Lexer) GetNowToken() Token {
 	return l.nowToken
 }
 
-func (l *Lexer) getLineEndLoc(line int) common.Location {
+func (l *Lexer) getLineEndLoc(line int) Location {
 	var str = l.source.GetOneLine(line)
-	var pos = common.Position{Line: line, Column: len(str)}
-	return common.Location{
+	var pos = Position{Line: line, Column: len(str)}
+	return Location{
 		Start: pos,
 		End:   pos,
 	}
 }
 
-func (l *Lexer) getFileEndLoc() common.Location {
+func (l *Lexer) getFileEndLoc() Location {
 	return l.getLineEndLoc(l.source.GetLineNum() - 1)
 }
 
@@ -157,11 +150,11 @@ func (l *Lexer) NextToken() Token {
 }
 
 // setNowToken 设置当前的单词
-func (l *Lexer) setNowToken(kind ast.TkKind, tokenStr string) {
+func (l *Lexer) setNowToken(kind TkKind, tokenStr string) {
 	l.nowToken.Loc.Start = l.tokenStartPos
 	l.nowToken.Loc.End = l.nextPos
-	l.nowToken.tokenKind = kind
-	l.nowToken.tokenStr = tokenStr
+	l.nowToken.TokenKind = kind
+	l.nowToken.TokenStr = tokenStr
 }
 
 // nextTokenStruct 获取下一个单词结构
@@ -341,9 +334,9 @@ func (l *Lexer) test_then_next(ch byte) bool {
 }
 
 // errorPrint 错误打印，词法分析报异常
-func (l *Lexer) errorPrint(loc common.Location, f string, a ...any) {
+func (l *Lexer) errorPrint(loc Location, f string, a ...any) {
 	err := fmt.Sprintf(f, a...)
-	paseError := ast.ParseError{
+	paseError := ParseError{
 		ErrStr: err,
 		Loc:    loc,
 	}
@@ -388,7 +381,7 @@ func (l *Lexer) skipWhiteSpaces() {
 
 		// headFlag 表示是否为首行注释还是尾部注释
 		var headFlag bool
-		if l.nowToken.IsValid() {
+		if l.nowToken.Valid {
 			headFlag = l.nowToken.Loc.End.Line != l.nextPos.Line
 		} else {
 			headFlag = true // 其他的都当成是首行注释，特别的是 块注释
@@ -526,7 +519,7 @@ func (l *Lexer) scanLongString(count int) string {
 		count = l.matchLongStringBacket()
 	}
 	if count < 0 {
-		l.errorPrint(common.Location{
+		l.errorPrint(Location{
 			Start: l.tokenStartPos,
 			End:   l.nextPos,
 		}, "invalid long string delimiter")

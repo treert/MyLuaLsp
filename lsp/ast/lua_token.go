@@ -1,8 +1,11 @@
 package ast
 
-import "strconv"
+import (
+	"mylua-lsp/lsp/common"
+	"strconv"
+)
 
-//TkKind token kind
+// TkKind token kind
 type TkKind int
 
 // The list of tokens.
@@ -170,4 +173,13 @@ var Keywords = map[string]TkKind{
 	"true":     TkKwTrue,
 	"until":    TkKwUntil,
 	"while":    TkKwWhile,
+}
+
+// Token 词法分析出来的每个单词
+type Token struct {
+	Valid     bool   // valid or not
+	TokenKind TkKind // token kind
+
+	TokenStr string // token string
+	Loc      common.Location
 }

@@ -5,13 +5,11 @@ import (
 	"mylua-lsp/lsp/common"
 )
 
-func ParseLuaSource(source *common.LuaSource) (block *ast.Block, commentMap LuaCommentMap, errList []ast.ParseError) {
+func ParseLuaSource(source *common.LuaSource) (block *ast.Block, commentMap LuaCommentMap, errList []ParseError) {
 	parser := Parser{}
 	lexer := NewLexer(source, parser.insertErr)
 	parser.l = lexer
-	parser.nowToken = lexer.GetNowToken()
-	parser.aheadToken.valid = false
-	parser.preToken = parser.nowToken // 一个 trick，保证 preToken 有意义
+	parser.aheadToken = lexer.GetNowToken() // lexer 已经准备好了第一个token了
 
 	defer func() {
 		if err1 := recover(); err1 != nil {
@@ -21,12 +19,9 @@ func ParseLuaSource(source *common.LuaSource) (block *ast.Block, commentMap LuaC
 		}
 	}()
 
-	blockBeginLoc := parser.nowToken.Loc
 	block = parser.parseBlock() // block
-	blockEndLoc := parser.preToken.Loc
-	block.Loc = common.GetRangeLoc(&blockBeginLoc, &blockEndLoc)
 
-	parser.CheckNowTokenKind(ast.TkEOF)
+	parser.NextTokenKind(ast.TkEOF)
 
 	return block, lexer.GetCommentMap(), parser.parseErrs
 }
@@ -39,15 +34,15 @@ type Parser struct {
 	nowToken   Token
 	aheadToken Token
 
-	parseErrs []ast.ParseError
+	parseErrs []ParseError
 }
 
 // NextToken 读取下一个单词
 func (p *Parser) NextToken() {
-	if p.aheadToken.valid {
+	if p.aheadToken.Valid {
 		p.preToken = p.nowToken
 		p.nowToken = p.aheadToken
-		p.aheadToken.valid = false
+		p.aheadToken.Valid = false
 		return
 	}
 	p.preToken = p.nowToken
@@ -56,7 +51,7 @@ func (p *Parser) NextToken() {
 
 // LookAheadToken 查看下一个单词，但不移动位置
 func (p *Parser) LookAheadToken() Token {
-	if p.aheadToken.valid {
+	if p.aheadToken.Valid {
 		return p.aheadToken
 	}
 	p.aheadToken = p.l.NextToken()
@@ -64,31 +59,34 @@ func (p *Parser) LookAheadToken() Token {
 }
 
 // LookAheadKind 查看下一个单词的类型，但不移动位置
-func (p *Parser) LookAheadKind() ast.TkKind {
-	return p.LookAheadToken().tokenKind
+func (p *Parser) LookAheadKind() TkKind {
+	return p.LookAheadToken().TokenKind
 }
 
-// NextIdentifier 下一个标识
+// NextIdentifier 等同 NextTokenKind(ast.TkIdentifier)
 func (p *Parser) NextIdentifier() {
 	p.NextTokenKind(ast.TkIdentifier)
 }
 
-// NextTokenKind 读取下一个单词，并且检验类型，如果不满足条件，记录错误
-func (p *Parser) NextTokenKind(kind ast.TkKind) {
-	p.NextToken()
-	if p.nowToken.tokenKind != kind {
-		p.l.errorPrint(p.nowToken.Loc, "expected %s, found '%s'", kind.String(), p.nowToken.tokenKind.String())
+// NextTokenKind 读取下一个单词，并且检验类型，如果不满足条件，记录错误。【遇到特殊token，会卡住】
+func (p *Parser) NextTokenKind(kind TkKind) {
+	look_kind := p.LookAheadKind()
+	if look_kind != kind {
+		p.l.errorPrint(p.aheadToken.Loc, "expected %s, found '%s'", kind.String(), look_kind.String())
+		p.NextToken()
+	} else {
+		p.NextToken()
 	}
 }
 
 // CheckNowTokenKind 检查当前单词类型是否符合要求，否则记录错误
-func (p *Parser) CheckNowTokenKind(kind ast.TkKind) {
-	if p.nowToken.tokenKind != kind {
-		p.l.errorPrint(p.nowToken.Loc, "expected %s, found '%s'", kind.String(), p.nowToken.tokenKind.String())
+func (p *Parser) CheckNowTokenKind(kind TkKind) {
+	if p.nowToken.TokenKind != kind {
+		p.l.errorPrint(p.nowToken.Loc, "expected %s, found '%s'", kind.String(), p.nowToken.TokenKind.String())
 	}
 }
 
-func (p *Parser) insertErr(oneErr ast.ParseError) {
+func (p *Parser) insertErr(oneErr ParseError) {
 	if len(p.parseErrs) < 30 {
 		p.parseErrs = append(p.parseErrs, oneErr)
 	} else {
@@ -101,12 +99,16 @@ func (p *Parser) insertErr(oneErr ast.ParseError) {
 
 // block ::= {stat} [retstat]
 func (p *Parser) parseBlock() *ast.Block {
-	return &ast.Block{
+	var start_loc = p.aheadToken.Loc
+	var block = &ast.Block{
 		Stats: p.parseStats(),
 	}
+	var end_loc = p.nowToken.Loc
+	block.Loc = common.GetRangeLoc(&start_loc, &end_loc)
+	return block
 }
 
-func isBlockEnd(tokenKind ast.TkKind) bool {
+func isBlockEnd(tokenKind TkKind) bool {
 	switch tokenKind {
 	case ast.TkEOF, ast.TkKwEnd,
 		ast.TkKwElse, ast.TkKwElseif, ast.TkKwUntil:
@@ -124,14 +126,4 @@ func (p *Parser) parseStats() []ast.Stat {
 		}
 	}
 	return stats
-}
-
-func (p *Parser) parseStat() ast.Stat {
-	switch p.LookAheadKind() {
-	case ast.TkKwBreak:
-		p.NextToken()
-		return &ast.BreakStat{}
-	default:
-		return nil
-	}
 }
