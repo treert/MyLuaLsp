@@ -6,9 +6,8 @@ import (
 )
 
 // TkKind token kind
-type TkKind int
+type TkKind int8
 
-// The list of tokens.
 const (
 	IKIllegal    TkKind = iota      // illegal
 	TkEOF                           // end-of-file
@@ -51,7 +50,7 @@ const (
 	TkKwBreak                       // break
 	TkKwDo                          // do
 	TkKwElse                        // else
-	TkKwElseif                      // elseif
+	TkKwElseIf                      // elseif
 	TkKwEnd                         // end
 	TkKwFalse                       // false
 	TkKwFor                         // for
@@ -118,7 +117,7 @@ var TokenKinds = [...]string{
 	TkKwBreak:    "break",          // break
 	TkKwDo:       "do",             // do
 	TkKwElse:     "else",           // else
-	TkKwElseif:   "elseif",         // elseif
+	TkKwElseIf:   "elseif",         // elseif
 	TkKwEnd:      "end",            // end
 	TkKwFalse:    "false",          // false
 	TkKwFor:      "for",            // for
@@ -155,7 +154,7 @@ var Keywords = map[string]TkKind{
 	"break":    TkKwBreak,
 	"do":       TkKwDo,
 	"else":     TkKwElse,
-	"elseif":   TkKwElseif,
+	"elseif":   TkKwElseIf,
 	"end":      TkKwEnd,
 	"false":    TkKwFalse,
 	"for":      TkKwFor,
@@ -179,6 +178,12 @@ var Keywords = map[string]TkKind{
 type Token struct {
 	Valid     bool   // valid or not
 	TokenKind TkKind // token kind
+
+	//region extended info
+
+	LocalAttr LocalAttr // local var attribute
+
+	//endregion
 
 	TokenStr string // token string
 	Loc      common.Location

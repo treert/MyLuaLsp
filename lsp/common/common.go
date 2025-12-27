@@ -7,12 +7,12 @@ type Location struct {
 }
 
 type Position struct {
-	Line   int // from 0
-	Column int // from 0
+	Line   int32 // from 0
+	Column int32 // from 0
 }
 
 // GetRangeLoc 获取两个位置的范围，为[]
-func GetRangeLoc(beginLoc, endLoc *Location) Location {
+func GetRangeLoc(beginLoc, endLoc Location) Location {
 	return Location{
 		Start: beginLoc.Start,
 		End:   endLoc.End,

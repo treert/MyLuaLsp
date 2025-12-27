@@ -104,14 +104,14 @@ func (p *Parser) parseBlock() *ast.Block {
 		Stats: p.parseStats(),
 	}
 	var end_loc = p.nowToken.Loc
-	block.Loc = common.GetRangeLoc(&start_loc, &end_loc)
+	block.Loc = common.GetRangeLoc(start_loc, end_loc)
 	return block
 }
 
 func isBlockEnd(tokenKind TkKind) bool {
 	switch tokenKind {
 	case ast.TkEOF, ast.TkKwEnd,
-		ast.TkKwElse, ast.TkKwElseif, ast.TkKwUntil:
+		ast.TkKwElse, ast.TkKwElseIf, ast.TkKwUntil:
 		return true
 	}
 	return false
@@ -120,8 +120,11 @@ func isBlockEnd(tokenKind TkKind) bool {
 func (p *Parser) parseStats() []ast.Stat {
 	stats := make([]ast.Stat, 0, 1)
 	for !isBlockEnd(p.LookAheadKind()) {
+		var start_loc = p.aheadToken.Loc
 		stat := p.parseStat()
 		if stat != nil {
+			var Loc = common.GetRangeLoc(start_loc, p.nowToken.Loc)
+			stat.SetLoc(Loc)
 			stats = append(stats, stat)
 		}
 	}

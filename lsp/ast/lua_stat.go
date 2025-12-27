@@ -1,9 +1,5 @@
 package ast
 
-import (
-	"mylua-lsp/lsp/common"
-)
-
 // chunk ::= block
 // type Chunk *Block
 
@@ -61,14 +57,14 @@ type DoStat struct {
 // if exp then block {elseif exp then block} [else block] end
 type IfStat struct {
 	LuaAstBase
-	Exps   []*ExpBase
-	Blocks []*Block
+	Exps   []Exp
+	Blocks []*Block // 如果最后时 else 的话，Blocks长度会比Exps多1
 }
 
 // while exp do block end
 type WhileStat struct {
 	LuaAstBase
-	Exp   *ExpBase
+	Exp   Exp
 	Block *Block
 }
 
@@ -77,17 +73,16 @@ type WhileStat struct {
 type RepeatStat struct {
 	LuaAstBase
 	Block *Block
-	Exp   *ExpBase
+	Exp   Exp
 }
 
 // for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end
 type ForNumStat struct {
 	LuaAstBase
-	VarName  string
-	VarLoc   common.Location
-	InitExp  *ExpBase
-	LimitExp *ExpBase
-	StepExp  *ExpBase
+	VarName  Token
+	InitExp  Exp
+	LimitExp Exp
+	StepExp  Exp
 	Block    *Block
 }
 
@@ -98,10 +93,9 @@ type ForNumStat struct {
 // explist ::= exp {‘,’ exp}
 type ForInStat struct {
 	LuaAstBase
-	NameList    []string
-	NameLocList []common.Location // 所有变量的位置信息
-	ExpList     []*ExpBase
-	Block       *Block
+	NameList []Token
+	ExpList  []Exp
+	Block    *Block
 }
 
 // varlist ‘=’ explist
@@ -111,8 +105,8 @@ type ForInStat struct {
 // var ::=  Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
 type AssignStat struct {
 	LuaAstBase
-	VarList []*ExpBase
-	ExpList []*ExpBase
+	VarList []Exp
+	ExpList []Exp
 }
 
 // local namelist [‘=’ explist]
@@ -121,16 +115,19 @@ type AssignStat struct {
 //
 // explist ::= exp {‘,’ exp}
 type LocalVarDeclStat struct {
-	NameList   []string
-	VarLocList []common.Location // 所有变量的位置信息
-	AttrList   []LocalAttr       // 变量的属性
-	ExpList    []*ExpBase
+	LuaAstBase
+	NameList []Token
+	ExpList  []Exp
 }
 
 // LocalFuncDefStat local function Name funcbody
 type LocalFuncDefStat struct {
 	LuaAstBase
-	Name    string
-	NameLoc common.Location // 函数名的位置信息
-	Exp     *FuncDefExp
+	Name    Token
+	FuncDef *FuncDefExp
+}
+
+type RetStat struct {
+	LuaAstBase
+	ExpList []Exp
 }

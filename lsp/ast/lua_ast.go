@@ -15,9 +15,11 @@ type ExpBase struct {
 
 type Stat interface {
 	GetLoc() common.Location
-	SetParent(parent Stat)
 	GetParent() Stat
 	IsExp() bool
+
+	SetLoc(loc common.Location)
+	SetParent(parent Stat)
 }
 
 type Exp interface {
@@ -27,6 +29,10 @@ type Exp interface {
 
 func (b *LuaAstBase) GetLoc() common.Location {
 	return b.Loc
+}
+
+func (b *LuaAstBase) SetLoc(loc common.Location) {
+	b.Loc = loc
 }
 
 func (b *LuaAstBase) SetParent(parent Stat) {

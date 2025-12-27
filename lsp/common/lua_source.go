@@ -64,5 +64,5 @@ func (s *LuaSource) GetOneLineLength(line int) int {
 }
 
 func (source *LuaSource) IsEOF(pos Position) bool {
-	return pos.Line >= len(source.lines)
+	return int(pos.Line) >= len(source.lines)
 }
