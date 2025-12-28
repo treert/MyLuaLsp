@@ -10,7 +10,7 @@ func ParseLuaSource(source *common.LuaSource) (block *ast.Block, commentMap LuaC
 	parser := Parser{}
 	lexer := NewLexer(source, parser.insertErr)
 	parser.l = lexer
-	parser.aheadToken = lexer.GetNowToken() // lexer 已经准备好了第一个token了
+	parser.aheadToken = lexer.NextToken() // 确保 aheadToken 有效
 
 	defer func() {
 		if err1 := recover(); err1 != nil {

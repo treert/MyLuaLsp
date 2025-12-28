@@ -33,9 +33,7 @@ type Lexer struct {
 
 	tokenStartPos Position
 
-	preToken   Token
-	nowToken   Token
-	aheadToken Token
+	nowToken Token
 
 	commentMap LuaCommentMap // 收集注释块信息，key时每块的最后一行。
 
@@ -48,20 +46,12 @@ func NewLexer(source *common.LuaSource, errHandler ErrorHandler) *Lexer {
 		source:   source,
 		cur_line: source.GetOneLine(0),
 		nextPos:  Position{Line: 0, Column: 0},
-		preToken: Token{
-			Valid: false,
-		},
 		nowToken: Token{
-			Valid: false,
-		},
-		aheadToken: Token{
 			Valid: false,
 		},
 		commentMap: LuaCommentMap{},
 		errHandler: errHandler,
 	}
-	lex.NextToken()
-	lex.NextToken()
 	return lex
 }
 
@@ -141,11 +131,7 @@ func (l *Lexer) getFileEndLoc() Location {
 
 // NextToken 下一个单词
 func (l *Lexer) NextToken() Token {
-	l.preToken = l.nowToken
-	l.nowToken = l.aheadToken
 	l.nextTokenStruct()
-	l.nowToken, l.aheadToken = l.aheadToken, l.nowToken
-	// mylua 词法特殊，可以根据前后关键字来决定某些 token 的类型。这么些只是为了预留。
 	return l.nowToken
 }
 
