@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"fmt"
 	"mylua-lsp/lsp/ast"
 	"mylua-lsp/lsp/common"
 )
@@ -30,7 +31,6 @@ type Parser struct {
 	// 词法分析器对象
 	l *Lexer
 
-	preToken   Token
 	nowToken   Token
 	aheadToken Token
 
@@ -40,12 +40,10 @@ type Parser struct {
 // NextToken 读取下一个单词
 func (p *Parser) NextToken() {
 	if p.aheadToken.Valid {
-		p.preToken = p.nowToken
 		p.nowToken = p.aheadToken
 		p.aheadToken.Valid = false
 		return
 	}
-	p.preToken = p.nowToken
 	p.nowToken = p.l.NextToken()
 }
 
@@ -72,7 +70,18 @@ func (p *Parser) NextIdentifier() {
 func (p *Parser) NextTokenKind(kind TkKind) {
 	look_kind := p.LookAheadKind()
 	if look_kind != kind {
-		p.l.errorPrint(p.aheadToken.Loc, "expected %s, found '%s'", kind.String(), look_kind.String())
+		p.insertParserErr(p.aheadToken.Loc, "expected %s, found '%s'", kind.String(), look_kind.String())
+		p.NextToken()
+	} else {
+		p.NextToken()
+	}
+}
+
+func (p *Parser) NextTokenKindExpectByLoc(kind TkKind, beginTokenLoc Location) {
+	look_kind := p.LookAheadKind()
+	if look_kind != kind {
+		p.insertParserErr(beginTokenLoc, "miss correspond %s", kind.String())
+		p.insertParserErr(p.aheadToken.Loc, "expected %s, found '%s'", kind.String(), look_kind.String())
 		p.NextToken()
 	} else {
 		p.NextToken()
@@ -82,8 +91,19 @@ func (p *Parser) NextTokenKind(kind TkKind) {
 // CheckNowTokenKind 检查当前单词类型是否符合要求，否则记录错误
 func (p *Parser) CheckNowTokenKind(kind TkKind) {
 	if p.nowToken.TokenKind != kind {
-		p.l.errorPrint(p.nowToken.Loc, "expected %s, found '%s'", kind.String(), p.nowToken.TokenKind.String())
+		p.insertParserErr(p.nowToken.Loc, "expected %s, found '%s'", kind.String(), p.nowToken.TokenKind.String())
 	}
+}
+
+// insert now token info
+func (p *Parser) insertParserErr(loc Location, f string, a ...any) {
+	err := fmt.Sprintf(f, a...)
+	paseError := ast.ParseError{
+		ErrStr: err,
+		Loc:    loc,
+	}
+
+	p.insertErr(paseError)
 }
 
 func (p *Parser) insertErr(oneErr ParseError) {

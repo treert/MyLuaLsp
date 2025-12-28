@@ -66,24 +66,24 @@ func NewLexer(source *common.LuaSource, errHandler ErrorHandler) *Lexer {
 }
 
 func (l *Lexer) isEndOfFile() bool {
-	return l.nextPos.Line >= l.source.GetLineNum()
+	return l.nextPos.GetLine() >= l.source.GetLineNum()
 }
 
 func (l *Lexer) isEndOfLine() bool {
-	return l.nextPos.Column >= len(l.cur_line)
+	return l.nextPos.GetColumn() >= len(l.cur_line)
 }
 
 func (l *Lexer) lookChar() byte {
-	if l.nextPos.Column < len(l.cur_line) {
-		return l.cur_line[l.nextPos.Column]
+	if l.nextPos.GetColumn() < len(l.cur_line) {
+		return l.cur_line[l.nextPos.GetColumn()]
 	}
 	return '\n'
 }
 
 // 只检测，不 next
 func (l *Lexer) test_str(s string) bool {
-	if l.nextPos.Column < len(l.cur_line) {
-		var next_str = l.cur_line[l.nextPos.Column:]
+	if l.nextPos.GetColumn() < len(l.cur_line) {
+		var next_str = l.cur_line[l.nextPos.GetColumn():]
 		return strings.HasPrefix(next_str, s)
 	}
 	return false
@@ -95,8 +95,8 @@ func (l *Lexer) next() {
 }
 
 func (l *Lexer) next_until(f func(byte) bool, check bool) bool {
-	for ; l.nextPos.Column < len(l.cur_line); l.nextPos.Column++ {
-		c := l.cur_line[l.nextPos.Column]
+	for ; l.nextPos.GetColumn() < len(l.cur_line); l.nextPos.Column++ {
+		c := l.cur_line[l.nextPos.GetColumn()]
 		if f(c) == check {
 			return true
 		}
@@ -108,7 +108,7 @@ func (l *Lexer) next_line() {
 	common.Assert(!l.isEndOfFile())
 	l.nextPos.Line++
 	l.nextPos.Column = 0
-	l.cur_line = l.source.GetOneLine(l.nextPos.Line)
+	l.cur_line = l.source.GetOneLine(l.nextPos.GetLine())
 }
 
 func (l *Lexer) backOneChar() {
@@ -128,7 +128,7 @@ func (l *Lexer) GetNowToken() Token {
 
 func (l *Lexer) getLineEndLoc(line int) Location {
 	var str = l.source.GetOneLine(line)
-	var pos = Position{Line: line, Column: len(str)}
+	var pos = Position{Line: int32(line), Column: int32(len(str))}
 	return Location{
 		Start: pos,
 		End:   pos,
@@ -407,12 +407,11 @@ func (l *Lexer) skipWhiteSpaces() {
 		}
 
 		// 空行会隔开注释块
-		if startPos.Line != lastLine+1 {
+		if startPos.GetLine() != lastLine+1 {
 			add_last_comment_block()
 		}
 
-		lastLine = l.nextPos.Line - 1 // 合适的注释已经吃掉最后一个 \n 了
-
+		lastLine = l.nextPos.GetLine() - 1 // 合适的注释已经吃掉最后一个 \n 了
 		if commentInfo == nil {
 			commentInfo = &ast.CommentBlock{}
 		}
@@ -580,7 +579,7 @@ func (l *Lexer) matchLongStringBacket() int {
 func (l *Lexer) scanShortString(delimiter byte) string {
 	var builder strings.Builder
 
-	start_idx := l.nextPos.Column
+	start_idx := l.nextPos.GetColumn()
 	for {
 		var end_idx = start_idx
 		var line_len = len(l.cur_line)
@@ -588,7 +587,7 @@ func (l *Lexer) scanShortString(delimiter byte) string {
 			c := l.cur_line[end_idx]
 			if c == delimiter {
 				builder.WriteString(l.cur_line[start_idx:end_idx])
-				l.nextPos.Column = end_idx + 1
+				l.nextPos.Column = int32(end_idx + 1)
 				goto finish // 正确结束
 			}
 			if c == '\\' {
@@ -631,7 +630,7 @@ func (l *Lexer) scanShortString(delimiter byte) string {
 			}
 		}
 		builder.WriteString(l.cur_line[start_idx:])
-		l.errorPrint(l.getLineEndLoc(l.nextPos.Line), "unfinished string, missing %c", delimiter)
+		l.errorPrint(l.getLineEndLoc(l.nextPos.GetLine()), "unfinished string, missing %c", delimiter)
 		l.next_line() // 不管如何进入下一行
 		break
 	next_line:

@@ -69,10 +69,10 @@ const (
 	TkIdentifier                    // identifier
 	TkNumber                        // number literal
 	TkString                        // string literal
-	TkOpUnm      TkKind = TkOpMinus // unary minus
-	TkOpSub      TkKind = TkOpMinus
-	TkOpBnot     TkKind = TkOpWave
-	TkOpBxor     TkKind = TkOpWave
+	TkOpUnm      TkKind = TkOpMinus // unary minus -
+	TkOpSub      TkKind = TkOpMinus // binary minus -
+	TkOpBnot     TkKind = TkOpWave  // unary bitwise not ~
+	TkOpBxor     TkKind = TkOpWave  // bitwise xor ~
 )
 
 var TokenKinds = [...]string{

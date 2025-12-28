@@ -69,8 +69,9 @@ func (p *Parser) parseGotoStat() ast.Stat {
 // do block end
 func (p *Parser) parseDoStat() ast.Stat {
 	p.NextTokenKind(ast.TkKwDo)
+	beginTokenLoc := p.nowToken.Loc
 	block := p.parseBlock()
-	p.NextTokenKind(ast.TkKwEnd)
+	p.NextTokenKindExpectByLoc(ast.TkKwEnd, beginTokenLoc)
 	var stat = &ast.DoStat{
 		Block: block,
 	}
@@ -80,10 +81,11 @@ func (p *Parser) parseDoStat() ast.Stat {
 // while exp do block end
 func (p *Parser) parseWhileStat() ast.Stat {
 	p.NextTokenKind(ast.TkKwWhile)
+	beginTokenLoc := p.nowToken.Loc
 	exp := p.parseExp()
 	p.NextTokenKind(ast.TkKwDo)
 	block := p.parseBlock()
-	p.NextTokenKind(ast.TkKwEnd)
+	p.NextTokenKindExpectByLoc(ast.TkKwEnd, beginTokenLoc)
 	var stat = &ast.WhileStat{
 		Exp:   exp,
 		Block: block,
@@ -95,8 +97,9 @@ func (p *Parser) parseWhileStat() ast.Stat {
 // 这个语法不好，最好不要使用
 func (p *Parser) parseRepeatStat() ast.Stat {
 	p.NextTokenKind(ast.TkKwRepeat)
+	beginTokenLoc := p.nowToken.Loc
 	block := p.parseBlock()
-	p.NextTokenKind(ast.TkKwUntil)
+	p.NextTokenKindExpectByLoc(ast.TkKwUntil, beginTokenLoc)
 	exp := p.parseExp()
 	var stat = &ast.RepeatStat{
 		Block: block,
@@ -110,20 +113,23 @@ func (p *Parser) parseIfStat() ast.Stat {
 	exps := make([]ast.Exp, 0, 1)
 	blocks := make([]*ast.Block, 0, 1)
 	p.NextTokenKind(ast.TkKwIf)
+	beginTokenLoc := p.nowToken.Loc
 	exps = append(exps, p.parseExp())
 	p.NextTokenKind(ast.TkKwThen)
 	blocks = append(blocks, p.parseBlock())
 	for p.LookAheadKind() == ast.TkKwElseIf {
 		p.NextToken()
+		beginTokenLoc = p.nowToken.Loc
 		exps = append(exps, p.parseExp())
 		p.NextTokenKind(ast.TkKwThen)
 		blocks = append(blocks, p.parseBlock())
 	}
 	if p.LookAheadKind() == ast.TkKwElse {
 		p.NextToken()
+		beginTokenLoc = p.nowToken.Loc
 		blocks = append(blocks, p.parseBlock())
 	}
-	p.NextTokenKind(ast.TkKwEnd)
+	p.NextTokenKindExpectByLoc(ast.TkKwEnd, beginTokenLoc)
 	var stat = &ast.IfStat{
 		Exps:   exps,
 		Blocks: blocks,
@@ -133,17 +139,18 @@ func (p *Parser) parseIfStat() ast.Stat {
 
 func (p *Parser) parseForStat() ast.Stat {
 	p.NextTokenKind(ast.TkKwFor)
+	beginTokenLoc := p.nowToken.Loc
 	p.NextIdentifier()
 	var varName = p.nowToken
 	if p.LookAheadKind() == ast.TkOpAssign {
-		return p.finishForNumStat(&varName)
+		return p.finishForNumStat(beginTokenLoc, &varName)
 	} else {
-		return p.finishForInStat(&varName)
+		return p.finishForInStat(beginTokenLoc, &varName)
 	}
 }
 
 // for Name ‘=’ exp ‘,’ exp [‘,’ exp] do block end
-func (p *Parser) finishForNumStat(varName *Token) *ast.ForNumStat {
+func (p *Parser) finishForNumStat(beginTokenLoc Location, varName *Token) *ast.ForNumStat {
 	p.NextTokenKind(ast.TkOpAssign)
 	initExp := p.parseExp()
 	p.NextTokenKind(ast.TkSepComma)
@@ -155,7 +162,7 @@ func (p *Parser) finishForNumStat(varName *Token) *ast.ForNumStat {
 	}
 	p.NextTokenKind(ast.TkKwDo)
 	block := p.parseBlock()
-	p.NextTokenKind(ast.TkKwEnd)
+	p.NextTokenKindExpectByLoc(ast.TkKwEnd, beginTokenLoc)
 	var stat = &ast.ForNumStat{
 		VarName:  *varName,
 		InitExp:  initExp,
@@ -167,14 +174,13 @@ func (p *Parser) finishForNumStat(varName *Token) *ast.ForNumStat {
 }
 
 // for namelist in explist do block end
-func (p *Parser) finishForInStat(varName *Token) *ast.ForInStat {
+func (p *Parser) finishForInStat(beginTokenLoc Location, varName *Token) *ast.ForInStat {
 	nameList := p._parseNameList(varName)
 	p.NextTokenKind(ast.TkKwIn)
 	expList := p.parseExpList()
 	p.NextTokenKind(ast.TkKwDo)
 	block := p.parseBlock()
-
-	p.NextTokenKind(ast.TkKwEnd)
+	p.NextTokenKindExpectByLoc(ast.TkKwEnd, beginTokenLoc)
 	var stat = &ast.ForInStat{
 		NameList: nameList,
 		ExpList:  expList,
@@ -186,8 +192,9 @@ func (p *Parser) finishForInStat(varName *Token) *ast.ForInStat {
 // functiondef ::= function funcname funcbody
 func (p *Parser) parseFuncDefStat() ast.Stat {
 	p.NextTokenKind(ast.TkKwFunction)
+	func_keyword_loc := p.nowToken.Loc
 	funcNameExp, isColon := p._parseFuncName()
-	funcDef := p.parseFuncBodyExp()
+	funcDef := p.parseFuncBodyExp(func_keyword_loc)
 	funcDef.IsColon = isColon
 	var stat = &ast.AssignStat{
 		VarList: []ast.Exp{funcNameExp},
@@ -225,9 +232,10 @@ func (p *Parser) parseLocalAssignOrFuncDefStat() ast.Stat {
 // local function Name funcbody
 func (p *Parser) _finishLocalFuncDefStat() *ast.LocalFuncDefStat {
 	p.NextTokenKind(ast.TkKwFunction)
+	func_keyword_loc := p.nowToken.Loc
 	p.NextIdentifier()
 	var funcName = p.nowToken
-	funcDef := p.parseFuncBodyExp()
+	funcDef := p.parseFuncBodyExp(func_keyword_loc)
 	var stat = &ast.LocalFuncDefStat{
 		Name:    funcName,
 		FuncDef: funcDef,
@@ -273,7 +281,7 @@ func (p *Parser) _getLocalAttribute() ast.LocalAttr {
 			p.NextTokenKind(ast.TkOpGt)
 			return ast.RDKTOCLOSE
 		} else {
-			p.l.errorPrint(p.nowToken.Loc, "unknown local attribute '%s'", attrName)
+			p.insertParserErr(p.nowToken.Loc, "unknown local attribute '%s'", attrName)
 			p.NextTokenKind(ast.TkOpGt)
 		}
 	}

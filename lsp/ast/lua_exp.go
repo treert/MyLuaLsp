@@ -131,6 +131,6 @@ type TableAccessExp struct {
 type FuncCallExp struct {
 	ExpBase
 	PrefixExp Exp
-	NameExp   *StringExp
-	Args      []Exp
+	NameExp   *StringExp // can be nil
+	Args      []Exp      // 无参数时为 nil
 }

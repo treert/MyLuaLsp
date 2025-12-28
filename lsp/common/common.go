@@ -11,6 +11,14 @@ type Position struct {
 	Column int32 // from 0
 }
 
+func (pos Position) GetLine() int {
+	return int(pos.Line)
+}
+
+func (pos Position) GetColumn() int {
+	return int(pos.Column)
+}
+
 // GetRangeLoc 获取两个位置的范围，为[]
 func GetRangeLoc(beginLoc, endLoc Location) Location {
 	return Location{
