@@ -2,12 +2,42 @@ package ast
 
 /*
 lua 类型注释的语法：
----@type TypeName
----@param ParamName TypeName
----@return TypeName
+
+TypeName ::= Name | nil | boolean | number | string | any | void | '{' {file_name:TypeName ,} '}'
+TypeName ::= TypeName|TypeName
+TypeName ::= TypeName[]
+TypeName ::= table<TypeName,TypeName>
+TypeName ::= fun( {param_name?:TypeName} ) [:TypeName{,TypeName} ]
+
+
+---@type TypeName{,TypeName}
+
+
+---@param param_name? TypeName
+---@vararg TypeName
+
+---@return TypeName {, TypeName}
 
 ---@class TypeName : TypeName {, TypeName}
----@field FieldName TypeName
+---@field [public|protected|private] field_name? TypeName @ 这个感觉没有意义呀
+
+---@alias new_name TypeName
+
+---@alias new_name XX
+---| XX
+---| XX
+
+
+泛型
+
+---@generic T[: TypeName] {, T[: TypeName]}
+
+TypeName ::= Name<TypeName{,TypeName}>
+
+其他
+
+---@language LangID
+---@lang LangID
 
 
 
