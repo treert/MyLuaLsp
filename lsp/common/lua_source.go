@@ -6,8 +6,8 @@ import (
 )
 
 type LuaSource struct {
-	Name  string
-	lines []string
+	LuaPath string // lua 全路径，唯一标识
+	lines   []string
 }
 
 func (s *LuaSource) GetOneLine(line int) string {
@@ -21,9 +21,9 @@ func (s *LuaSource) GetLineNum() int {
 	return len(s.lines)
 }
 
-func NewLuaSource(chunk []byte, Name string) *LuaSource {
+func NewLuaSource(chunk []byte, Path string) *LuaSource {
 	var source = &LuaSource{
-		Name: Name,
+		LuaPath: Path,
 	}
 	// try skip utf-8 bom
 	chunk = bytes.TrimPrefix(chunk, []byte{0xEF, 0xBB, 0xBF})
