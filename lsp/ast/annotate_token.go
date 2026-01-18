@@ -19,11 +19,11 @@ TypeName ::= fun( {param_name?:TypeName} ) [:TypeName{,TypeName} ]
 ---@return TypeName {, TypeName}
 
 ---@class TypeName : TypeName {, TypeName}
----@field [public|protected|private] field_name? TypeName @ 这个感觉没有意义呀
+---@field [public|protected|private] field_name? TypeName @ 这个感觉没有意义呀，lua只能注释性提示下了。
 
 ---@alias new_name TypeName
 
----@alias new_name XX
+---@alias new_name
 ---| XX
 ---| XX
 
