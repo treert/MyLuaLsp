@@ -2,6 +2,9 @@ package ast
 
 import "mylua-lsp/lsp/common"
 
+type Position = common.Position
+type Location = common.Location
+
 // ParseError check的错误信息
 type ParseError struct {
 	ErrStr string          // 简单的错误信息
@@ -24,4 +27,10 @@ type CommentLine struct {
 // 连续的注释块。是后续注释解析的高层单位
 type CommentBlock struct {
 	List []CommentLine
+}
+
+// NameAndLoc 名字和位置，会是一个非常常用的结构
+type NameAndLoc struct {
+	Name string
+	Loc  Location
 }
