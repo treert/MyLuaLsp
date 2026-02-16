@@ -1,48 +1,5 @@
 package ast
 
-/*
-lua 类型注释的语法：
-
-TypeName ::= Name | nil | boolean | number | string | any | void | '{' {file_name:TypeName ,} '}'
-TypeName ::= TypeName|TypeName
-TypeName ::= TypeName[]
-TypeName ::= table<TypeName,TypeName>
-TypeName ::= fun( {param_name?:TypeName} ) [:TypeName{,TypeName} ]
-
-
----@type TypeName{,TypeName}
-
-
----@param param_name? TypeName
----@vararg TypeName
-
----@return TypeName {, TypeName}
-
----@class TypeName : TypeName {, TypeName}
----@field [public|protected|private] field_name? TypeName @ 这个感觉没有意义呀，lua只能注释性提示下了。
-
----@alias new_name TypeName
-
----@alias new_name
----| XX
----| XX
-
-
-泛型
-
----@generic T[: TypeName] {, T[: TypeName]}
-
-TypeName ::= Name<TypeName{,TypeName}>
-
-其他
-
----@language LangID
----@lang LangID
-
-
-
-*/
-
 // ATokenType 类型
 type ATokenType int8
 
