@@ -14,5 +14,10 @@ type FileInfo struct {
 
 }
 
+// VarInfo 变量信息。lua 里定义的变量
 type VarInfo struct {
+}
+
+// Lua 表达式的值，语义分析的结果。主要是抽取常量级别的信息，语义分析就能推导出来的值。
+type LuaValue struct {
 }

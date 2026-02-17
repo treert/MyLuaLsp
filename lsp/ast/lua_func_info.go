@@ -12,9 +12,9 @@ type LabelInfo struct {
 type ReturnInfo struct {
 }
 
+// 定义的lua函数，语义分析的结果
 type FuncInfo struct {
 	Parent        *FuncInfo     // 父函数
 	LabelInfoList []*LabelInfo  // 函数内的label标签信息
 	ReturnList    []*ReturnInfo // 函数的返回值列表，支持多返回值
-
 }

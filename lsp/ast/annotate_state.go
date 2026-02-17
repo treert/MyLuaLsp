@@ -62,9 +62,10 @@ type Type_LiteralValue struct {
 	Type LiteralValueType
 }
 
+// name: TypeName 用于非常多地方
 type Type_KeyValue struct {
-	Name NameAndLoc
-	Type TypeBase
+	NameAndLoc NameAndLoc
+	Type       TypeBase
 }
 
 // TypeName ::= '{' {file_name:TypeName ,} '}'
@@ -82,39 +83,67 @@ type Type_Union struct {
 	TypeList []TypeBase
 }
 
-// TypeName ::= Name 最终要通过这个名字找到具体的类型
+// 最终要通过这个名字找到具体的类型
 type Type_Identifier struct {
-	Name      NameAndLoc // 例如：any, number, string, 或者用户定义的类型
-	IsGeneric bool       // 是否是泛型类型名，例如：T, U
+	NameAndLoc     NameAndLoc // 例如：any, number, string, 或者用户定义的类型
+	IsGenericParam bool       // 是否是泛型类型名，例如：T, U
 }
 
-// TypeName ::= fun( {param_name?:TypeName} ) [:TypeName{,TypeName} ]
+type Type_FunParam struct {
+	NameAndLoc NameAndLoc
+	Type       TypeBase
+	IsOptional bool // 是否是可选参数
+	Comment    string
+}
+
+type Type_FunReturn struct {
+	Type    TypeBase
+	Comment string
+}
+
+// 有两种定义方式：1. 注释里定义 2. lua语法定义的函数。
 type Type_Fun struct {
-	ParamList  []Type_KeyValue
-	ReturnList []TypeBase
+	ParamList  []Type_FunParam
+	ReturnList []Type_FunReturn
+	Comment    string
+	// todo 关联 lua 语法定义的函数信息
 }
 
 // TypeName ::= Name<TypeName{,TypeName}>
 type Type_GenericInstance struct {
-	Name          NameAndLoc
+	NameAndLoc    NameAndLoc // 通过这个名字找到泛型定义，Type_Class
 	ParamTypeList []TypeBase // 泛型实例化的参数类型列表
+}
+
+type Type_ClassField struct {
+	NameAndLoc NameAndLoc
+	Type       TypeBase
+	Comment    string
+	IsOptional bool // 是否是可选字段
 }
 
 // @class 构建的类型
 type Type_Class struct {
-	Name           NameAndLoc
-	ParentTypeList []TypeBase
-	// todo 还需要记录类的成员信息
+	NameAndLoc       NameAndLoc
+	ParentTypeList   []TypeBase
+	GenericParamList []Type_KeyValue // 泛型类有这个
+	FieldList        []Type_ClassField
+	Comment          string
 }
 
 type Type_Alias struct {
-	Name NameAndLoc
-	Type TypeBase
+	NameAndLoc NameAndLoc
+	Type       TypeBase
+	Comment    string
 }
 
 type Type_Enum struct {
-	// todo
+	NameAndLoc NameAndLoc
+	Comment    string
+	// todo 关联 lua 定义的table，其中是实际定义的枚举成员
 }
+
+/////////////////// 以下是行注释语句片段 /////////////////////////
 
 // ---@generic T[: TypeName] {, T[: TypeName]}
 //
